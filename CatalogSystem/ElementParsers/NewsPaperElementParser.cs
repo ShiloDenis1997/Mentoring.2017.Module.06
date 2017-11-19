@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Xml.Linq;
 using CatalogSystem.Abstract;
 using CatalogSystem.CatalogEntities;
@@ -20,8 +16,8 @@ namespace CatalogSystem.ElementParsers
                 throw new ArgumentNullException($"{nameof(element)} is null");
             }
 
-            Newspaper newspaper = new Newspaper { Name = element.Attribute("name").Value };
-            return newspaper;
+            NewsPaper newsPaper = new NewsPaper { Name = element.Attribute("name").Value };
+            return newsPaper;
         }
     }
 }

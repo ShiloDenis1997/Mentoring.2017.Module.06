@@ -41,7 +41,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Abstract\IElementParser.cs" />
+    <Compile Include="Abstract\IEntityWriter.cs" />
+    <Compile Include="CatalogEntities\Author.cs" />
     <Compile Include="CatalogEntities\Book.cs" />
+    <Compile Include="CatalogEntities\Creator.cs" />
     <Compile Include="CatalogEntities\Patent.cs" />
     <Compile Include="CatalogSystem.cs" />
     <Compile Include="Abstract\ICatalogEntity.cs" />
@@ -49,6 +52,9 @@
     <Compile Include="ElementParsers\BookElementParser.cs" />
     <Compile Include="ElementParsers\NewsPaperElementParser.cs" />
     <Compile Include="ElementParsers\PatentElementParser.cs" />
+    <Compile Include="EntityWriters\BookWriter.cs" />
+    <Compile Include="EntityWriters\NewsPaperWriter.cs" />
+    <Compile Include="EntityWriters\PatentWriter.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
