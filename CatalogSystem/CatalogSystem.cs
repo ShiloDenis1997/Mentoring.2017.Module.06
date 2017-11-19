@@ -4,6 +4,7 @@ using System.IO;
 using System.Xml;
 using System.Xml.Linq;
 using CatalogSystem.Abstract;
+using CatalogSystem.Exceptions;
 
 namespace CatalogSystem
 {
@@ -52,7 +53,15 @@ namespace CatalogSystem
                     while (xmlReader.NodeType == XmlNodeType.Element)
                     {
                         var node = XNode.ReadFrom(xmlReader) as XElement;
-                        yield return _elementParsers[node.Name.LocalName].ParseElement(node);
+                        IElementParser parser;
+                        if (_elementParsers.TryGetValue(node.Name.LocalName, out parser))
+                        {
+                            yield return parser.ParseElement(node);
+                        }
+                        else
+                        {
+                            throw new UnknownElementException($"Founded unknown element tag: {node.Name.LocalName}");
+                        }
                     }
                 } while (xmlReader.Read());
             }
@@ -66,7 +75,15 @@ namespace CatalogSystem
                 xmlWriter.WriteStartElement(_catalogElementName);
                 foreach (var catalogEntity in catalogEntities)
                 {
-                    _entityWriters[catalogEntity.GetType()].WriteEntity(xmlWriter, catalogEntity);
+                    IEntityWriter writer;
+                    if (_entityWriters.TryGetValue(catalogEntity.GetType(), out writer))
+                    {
+                        writer.WriteEntity(xmlWriter, catalogEntity);
+                    }
+                    else
+                    {
+                        throw new EntityWriterNotFoundedException($"Cannot find entity writer for type {catalogEntity.GetType().FullName}");
+                    }
                 }
                 xmlWriter.WriteEndElement();
             }

@@ -1,9 +1,9 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Xml.Linq;
 using CatalogSystem.Abstract;
 using CatalogSystem.CatalogEntities;
 using CatalogSystem.ElementParsers;
@@ -28,20 +28,17 @@ namespace CatalogSystem.Test
         [Test]
         public void Test_Books_Read()
         {
-            TextReader sr = new StringReader(
-                new XDocument(new XDeclaration("1.0", "utf-16", null),
-                    new XElement("catalog",
-                        new XElement("book", new XAttribute("name", "A song of Ice and Fire")),
-                        new XElement("book", new XAttribute("name", "Lord of the Rings"))
-                    )).ToString());
+            TextReader sr = new StringReader(@"<?xml version=""1.0"" encoding=""utf-16""?>" +
+                                             "<catalog>" +
+                                             GetBookXml() +
+                                             "</catalog>");
 
-            IEnumerable<ICatalogEntity> books = _catalog.ReadFrom(sr);
+            IEnumerable<ICatalogEntity> books = _catalog.ReadFrom(sr).ToList();
 
             CollectionAssert.AreEqual(books, new[]
             {
-                new Book {Name = "A song of Ice and Fire"},
-                new Book {Name = "Lord of the Rings"}
-            });
+                CreateBook()
+            }, new BooksComparer());
 
             sr.Dispose();
         }
@@ -49,20 +46,17 @@ namespace CatalogSystem.Test
         [Test]
         public void Test_Papers_Read()
         {
-            TextReader sr = new StringReader(
-                new XDocument(new XDeclaration("1.0", "utf-16", null),
-                    new XElement("catalog",
-                        new XElement("newspaper", new XAttribute("name", "Times")),
-                        new XElement("newspaper", new XAttribute("name", "Intex-press"))
-                    )).ToString());
+            TextReader sr = new StringReader(@"<?xml version=""1.0"" encoding=""utf-16""?>" +
+                                             "<catalog>" +
+                                             GetNewspaperXml() +
+                                             "</catalog>");
 
             IEnumerable<ICatalogEntity> newspapers = _catalog.ReadFrom(sr);
 
             CollectionAssert.AreEqual(newspapers, new[]
             {
-                new NewsPaper {Name = "Times"},
-                new NewsPaper {Name = "Intex-press"}
-            });
+                CreateNewspaper()
+            }, new NewsPaperComparer());
 
             sr.Dispose();
         }
@@ -70,20 +64,17 @@ namespace CatalogSystem.Test
         [Test]
         public void Test_Patents_Read()
         {
-            TextReader sr = new StringReader(
-                new XDocument(new XDeclaration("1.0", "utf-16", null),
-                    new XElement("catalog",
-                        new XElement("patent", new XAttribute("name", "Airplane")),
-                        new XElement("patent", new XAttribute("name", "Vehicle"))
-                    )).ToString());
+            TextReader sr = new StringReader(@"<?xml version=""1.0"" encoding=""utf-16""?>" +
+                                             "<catalog>" +
+                                                GetPatentXml() +
+                                             "</catalog>");
 
             IEnumerable<ICatalogEntity> newspapers = _catalog.ReadFrom(sr);
 
             CollectionAssert.AreEqual(newspapers, new[]
             {
-                new Patent {Name = "Airplane"},
-                new Patent {Name = "Vehicle"}
-            });
+                CreatePatent()
+            }, new PatentComparer());
 
             sr.Dispose();
         }
@@ -91,28 +82,18 @@ namespace CatalogSystem.Test
         [Test]
         public void Test_MixedEntities_Read()
         {
-            TextReader sr = new StringReader(
-                new XDocument(new XDeclaration("1.0", "utf-16", null),
-                    new XElement("catalog",
-                        new XElement("book", new XAttribute("name", "A song of Ice and Fire")),
-                        new XElement("patent", new XAttribute("name", "Airplane")),
-                        new XElement("newspaper", new XAttribute("name", "Times")),
-                        new XElement("patent", new XAttribute("name", "Vehicle")),
-                        new XElement("newspaper", new XAttribute("name", "Intex-press")),
-                        new XElement("book", new XAttribute("name", "Lord of the Rings"))
-                    )).ToString());
+            TextReader sr = new StringReader(@"<?xml version=""1.0"" encoding=""utf-16""?>" +
+                                             "<catalog>" +
+                                                GetPatentXml() +
+                                                GetBookXml() + 
+                                                GetNewspaperXml() +
+                                             "</catalog>");
 
-            IEnumerable<ICatalogEntity> newspapers = _catalog.ReadFrom(sr);
+            List<ICatalogEntity> entities = _catalog.ReadFrom(sr).ToList();
 
-            CollectionAssert.AreEqual(newspapers, new ICatalogEntity[]
-            {
-                new Book {Name = "A song of Ice and Fire"},
-                new Patent {Name = "Airplane"},
-                new NewsPaper {Name = "Times"},
-                new Patent {Name = "Vehicle"},
-                new NewsPaper {Name = "Intex-press"},
-                new Book {Name = "Lord of the Rings"}
-            });
+            Assert.IsTrue(new PatentComparer().Compare(entities[0], CreatePatent()) == 0);
+            Assert.IsTrue(new BooksComparer().Compare(entities[1], CreateBook()) == 0);
+            Assert.IsTrue(new NewsPaperComparer().Compare(entities[2], CreateNewspaper()) == 0);
 
             sr.Dispose();
         }
@@ -133,44 +114,15 @@ namespace CatalogSystem.Test
             };
             string expectedResult = @"<?xml version=""1.0"" encoding=""utf-16""?>" +
                 "<catalog>" +
-                    @"<book name=""A song of Ice and Fire"" " +
-                        @"publicationCity=""New-York"" " +
-                        @"publisherName=""Typography"" " +
-                        @"publishYear=""1999"" " +
-                        @"pagesCount=""500"" " +
-                        @"isbn=""978-1-56619-909-4"">" +
-                        "<note>This book is about history of Seven Kingdom.</note>" +
-                        "<authors>" +
-                            @"<author name=""George"" surname=""Martin"" />" +
-                        "</authors>" +
-                    "</book>" +
-                    "<newspaper name=\"Times\" " +
-	                    "publicationCity=\"London\" " +
-	                    "publisherName=\"London typography\" " +
-	                    "publishYear=\"1904\" " +
-	                    "pagesCount=\"14\" " +
-	                    "date=\"05.16.1905\" " + 
-	                    "issn=\"0317-8471\">" +
-	                    "<note>The most popular London newspaper</note>" +
-                    "</newspaper>" +
-                    "<patent name=\"Airplane\" " +
-	                    "country=\"USA\" " +
-                        "registrationNumber=\"D0000126\" " +
-	                    "filingDate=\"12.24.1905\" " +
-	                    "publishDate=\"01.20.1906\" " +
-	                    "pagesCount=\"100\">" +
-	                    "<note>First airplane in the world</note>" +
-	                    "<creators>" +
-		                    "<creator name=\"Orville\" surname=\"Wright\" />" +
-		                    "<creator name=\"Wilbur\" surname=\"Wright\" />" +
-	                    "</creators>" +
-                    "</patent>" +
+                    GetBookXml() +
+                    GetNewspaperXml() +
+                    GetPatentXml() +
                 "</catalog>";
 
             _catalog.WriteTo(sw, entities);
             sw.Dispose();
 
-            Assert.AreEqual(expectedResult.ToString(), actualResult.ToString());
+            Assert.AreEqual(expectedResult, actualResult.ToString());
         }
 
         private NewsPaper CreateNewspaper()
@@ -184,6 +136,7 @@ namespace CatalogSystem.Test
                 PagesCount = 14,
                 Date = new DateTime(1905, 5, 16),
                 IssnNumber = "0317-8471",
+                Number = 14,
                 Note = "The most popular London newspaper"
             };
         }
@@ -223,6 +176,111 @@ namespace CatalogSystem.Test
                     new Author {Name = "George", Surname = "Martin"}
                 }
             };
+        }
+
+        private string GetBookXml()
+        {
+            return @"<book name=""A song of Ice and Fire"" " +
+                       @"publicationCity=""New-York"" " +
+                       @"publisherName=""Typography"" " +
+                       @"publishYear=""1999"" " +
+                       @"pagesCount=""500"" " +
+                       @"isbn=""978-1-56619-909-4"">" +
+                       "<note>This book is about history of Seven Kingdom.</note>" +
+                       "<authors>" +
+                            @"<author name=""George"" surname=""Martin"" />" +
+                       "</authors>" +
+                   "</book>";
+        }
+
+        private string GetNewspaperXml()
+        {
+            return "<newspaper name=\"Times\" " +
+                       "publicationCity=\"London\" " +
+                       "publisherName=\"London typography\" " +
+                       "publishYear=\"1904\" " +
+                       "pagesCount=\"14\" " +
+                       "date=\"05/16/1905\" " +
+                       "issn=\"0317-8471\" " +
+                       "number=\"14\">" +
+                       "<note>The most popular London newspaper</note>" +
+                   "</newspaper>";
+        }
+
+        private string GetPatentXml()
+        {
+            return "<patent name=\"Airplane\" " +
+                       "country=\"USA\" " +
+                       "registrationNumber=\"D0000126\" " +
+                       "filingDate=\"12/24/1905\" " +
+                       "publishDate=\"01/20/1906\" " +
+                       "pagesCount=\"100\">" +
+                       "<note>First airplane in the world</note>" +
+                       "<creators>" +
+                            "<creator name=\"Orville\" surname=\"Wright\" />" +
+                            "<creator name=\"Wilbur\" surname=\"Wright\" />" +
+                       "</creators>" +
+                   "</patent>";
+        }
+    }
+
+    internal class BooksComparer : IComparer, IComparer<Book>
+    {
+        public int Compare(Book x, Book y)
+        {
+            return x.PagesCount == y.PagesCount
+                   && x.Name == y.Name
+                   && x.IsbnNumber == y.IsbnNumber
+                   && x.Note == y.Note
+                   && x.PagesCount == y.PagesCount
+                   && x.PublishYear == y.PublishYear
+                   && x.PublicationCity == y.PublicationCity
+                   && x.PublisherName == y.PublisherName ? 0 : 1;
+        }
+
+        public int Compare(object x, object y)
+        {
+            return Compare(x as Book, y as Book);
+        }
+    }
+
+    internal class NewsPaperComparer : IComparer, IComparer<NewsPaper>
+    {
+        public int Compare(object x, object y)
+        {
+            return Compare(x as NewsPaper, y as NewsPaper);
+        }
+
+        public int Compare(NewsPaper x, NewsPaper y)
+        {
+            return x.Name == y.Name &&
+                   x.PublicationCity == y.PublicationCity &&
+                   x.PublisherName == y.PublisherName &&
+                   x.PublishYear == y.PublishYear &&
+                   x.PagesCount == y.PagesCount &&
+                   x.Note == y.Note &&
+                   x.Number == y.Number &&
+                   x.Date == y.Date &&
+                   x.IssnNumber == y.IssnNumber ? 0 : 1;
+        }
+    }
+
+    internal class PatentComparer : IComparer, IComparer<Patent>
+    {
+        public int Compare(object x, object y)
+        {
+            return Compare(x as Patent, y as Patent);
+        }
+
+        public int Compare(Patent x, Patent y)
+        {
+            return x.Name == y.Name &&
+                   x.Country == y.Country &&
+                   x.RegistrationNumber == y.RegistrationNumber &&
+                   x.FilingDate == y.FilingDate &&
+                   x.PublishDate == y.PublishDate &&
+                   x.PagesCount == y.PagesCount &&
+                   x.Note == y.Note ? 0 : 1;
         }
     }
 }

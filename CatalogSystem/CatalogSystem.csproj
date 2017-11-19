@@ -40,8 +40,14 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Abstract\BaseXmlElementParser.cs" />
+    <Compile Include="Abstract\BaseXmlEntityWriter.cs" />
     <Compile Include="Abstract\IElementParser.cs" />
     <Compile Include="Abstract\IEntityWriter.cs" />
+    <Compile Include="Exceptions\CatalogSystemException.cs" />
+    <Compile Include="Exceptions\EntityWriterNotFoundedException.cs" />
+    <Compile Include="Exceptions\MandatoryElementMissedException.cs" />
+    <Compile Include="Exceptions\MandatoryAttributeMissedException.cs" />
     <Compile Include="CatalogEntities\Author.cs" />
     <Compile Include="CatalogEntities\Book.cs" />
     <Compile Include="CatalogEntities\Creator.cs" />
@@ -55,7 +61,11 @@
     <Compile Include="EntityWriters\BookWriter.cs" />
     <Compile Include="EntityWriters\NewsPaperWriter.cs" />
     <Compile Include="EntityWriters\PatentWriter.cs" />
+    <Compile Include="Exceptions\UnknownElementException.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Helpers\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
